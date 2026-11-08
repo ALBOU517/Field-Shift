@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Shift · Algorithme</title>
+<meta name="description" content="Comment Field Shift transforme un champ tracé et les données de la NASA en suggestions de rotations de cultures.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232E6B3B' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z'/%3E%3Cpath d='M2 21c0-3 1.9-5.4 5.1-6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="site-nav" aria-label="Navigation principale">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6"/></svg>
+      Field Shift
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Vue d'ensemble</a>
+      <a href="app.html">Prototype</a>
+      <a href="algorithme.html" aria-current="page">Algorithme</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Field Shift · Partie B</p>
+    <h1>L'algorithme de suggestions</h1>
+    <p class="sub">Du champ tracé aux 3 meilleures rotations : 6 étapes, 5 scores, chaque chiffre relié à une étude.</p>
+    <div class="actions">
+      <a class="btn btn-mint" href="app.html">Voir l'algorithme en action</a>
+      <a class="btn btn-outline" href="https://github.com/" id="codeLink">Lire le code (js/engine.js)</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B1 · Vue d'ensemble</p>
+    <h2 class="h2">Le pipeline en un coup d'œil</h2>
+    <p class="lead">Les entrées à gauche, les six étapes au centre, ce que voit le fermier à droite.</p>
+    <div class="pipeline">
+      <div class="pipe-col">
+        <p class="eyebrow" style="color: var(--subtle)">Entrées</p>
+        <div class="node"><b>Polygone du champ</b><small>Tracé par le fermier</small></div>
+        <div class="node"><b>Données NASA</b><small>POWER, IMERG, SMAP, ECOSTRESS, HLS</small></div>
+        <div class="node"><b>Données de sol</b><small>SoilGrids ou équivalent</small></div>
+        <div class="node"><b>Cultures choisies</b><small>Saisie du fermier</small></div>
+        <div class="node"><b>Base de cultures</b><small>Attributs par culture</small></div>
+        <div class="node"><b>Études (paramètres)</b><small>Effets de rotation sourcés</small></div>
+        <div class="node"><b>Priorités</b><small>Curseurs eau, sol, risque, revenu</small></div>
+      </div>
+      <div class="pipe-arrow" aria-hidden="true">→</div>
+      <div class="pipe-col" style="gap: 0">
+        <p class="eyebrow" style="color: var(--subtle); margin-bottom: 8px">Traitement</p>
+        <div class="proc"><span class="n">1</span><strong>Conditions du champ</strong><small>Moyennes, tendances, années types, NDVI</small></div>
+        <div class="dn" aria-hidden="true">↓</div>
+        <div class="proc"><span class="n">2</span><strong>Générer les rotations valides</strong><small>Énumération + règles de calendrier et de famille</small></div>
+        <div class="dn" aria-hidden="true">↓</div>
+        <div class="proc"><span class="n">3</span><strong>Calculer 5 scores par rotation</strong><small>Rendement, résilience, sol, eau, revenu</small></div>
+        <div class="dn" aria-hidden="true">↓</div>
+        <div class="proc"><span class="n">4</span><strong>Pondérer selon les priorités</strong><small>Les curseurs du fermier deviennent des poids</small></div>
+        <div class="dn" aria-hidden="true">↓</div>
+        <div class="proc"><span class="n">5</span><strong>Scénarios météo → fourchettes</strong><small>Normal, sec, chaud</small></div>
+        <div class="dn" aria-hidden="true">↓</div>
+        <div class="proc"><span class="n">6</span><strong>Explications</strong><small>Trois raisons + niveau de confiance</small></div>
+      </div>
+      <div class="pipe-arrow" aria-hidden="true">→</div>
+      <div class="pipe-col">
+        <p class="eyebrow" style="color: var(--subtle)">Sorties</p>
+        <div class="node soft"><b style="font-size: 16px">Top 3 des rotations</b><small style="color: var(--text)">+ la rotation actuelle pour comparer</small></div>
+        <div class="node"><b>5 scores sur 100</b><small>Eau, sol, résilience, rendement, revenu</small></div>
+        <div class="node"><b>Fourchette de revenus</b><small>Année sèche → année favorable</small></div>
+        <div class="node"><b>Explication + confiance</b><small>Chaque chiffre relié à son étude</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B2 · Les entrées</p>
+    <h2 class="h2">Les données</h2>
+    <p class="lead">Le compte Earthdata est gratuit : créez-le avant le hackathon. Pré-téléchargez la région de démo pour ne pas dépendre des serveurs le jour J.</p>
+    <div class="tbox">
+      <table class="t" style="min-width: 760px">
+        <thead><tr><th>Donnée</th><th>Source</th><th>Résolution</th><th>Accès</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr><td>Température, pluie, ensoleillement</td><td><span class="pill nasa">NASA POWER</span></td><td>Point, quotidien</td><td>Aucun compte</td><td class="muted">Climat, tendances, scénarios</td></tr>
+          <tr><td>Précipitations</td><td><span class="pill nasa">GPM IMERG</span></td><td>~10 km, quotidien</td><td>Earthdata</td><td class="muted">Eau disponible</td></tr>
+          <tr><td>Humidité du sol</td><td><span class="pill nasa">SMAP</span></td><td>9 km, quotidien</td><td>Earthdata</td><td class="muted">Eau disponible, stress</td></tr>
+          <tr><td>Consommation d'eau des plantes</td><td><span class="pill nasa">ECOSTRESS</span></td><td>~70 m</td><td>Earthdata</td><td class="muted">Besoin en eau, stress</td></tr>
+          <tr><td>Vigueur de la végétation (NDVI)</td><td><span class="pill nasa">HLS</span></td><td>30 m</td><td>Earthdata</td><td class="muted">Historique du champ, précédent cultural</td></tr>
+          <tr><td>Stockage d'eau à long terme</td><td><span class="pill nasa">GRACE-FO</span></td><td>Grossière, mensuelle</td><td>Earthdata</td><td class="muted">Tendance d'assèchement (option)</td></tr>
+          <tr><td>Texture et matière organique</td><td><span class="pill other">SoilGrids</span></td><td>250 m</td><td>Ouvert</td><td class="muted">Score sol, eau</td></tr>
+          <tr><td>Cultures, priorités, historique</td><td><span class="pill other">Fermier</span></td><td>—</td><td>—</td><td class="muted">Contraintes et pondération</td></tr>
+          <tr><td>Prix et coûts</td><td><span class="pill other">Budgets de production</span></td><td>Région</td><td>À trouver</td><td class="muted">Revenu</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B3 · Modèle de données</p>
+    <h2 class="h2">Trois objets</h2>
+    <p class="lead">Une rotation est une liste d'occupations du champ dans le temps, pas « une culture = un an ». Pour le MVP : une culture principale par année, avec une couverture en option.</p>
+    <div class="grid grid-wide">
+      <div class="card"><span class="k">Culture</span>
+<pre class="code">Culture {
+  nom, famille
+  type: annuelle | hiver |
+        couverture | vivace
+  fenetre_semis: [mai, juin]
+  duree_mois: 4
+  besoin_eau_mm
+  tolerance_chaleur
+  tolerance_secheresse
+  fixe_azote: vrai/faux
+  effet_sol: -2 à +2
+  rendement_base: t/ha
+  prix: $/t
+  cout_production: $/ha
+  delai_retour_ans
+}</pre></div>
+      <div class="card"><span class="k">Rotation</span>
+<pre class="code">Rotation {
+  occupations: [
+    { Soya,
+      2027-05 → 2027-09 },
+    { Blé d'hiver,
+      2027-09 → 2028-07 },
+    { Trèfle,
+      2028-08 → 2029-04 },
+    { Maïs,
+      2029-05 → 2029-10 }
+  ]
+}</pre>
+        <p class="cb" style="margin-top: 12px">Règle unique : <strong>fin(A) ≤ semis(B)</strong>.</p></div>
+      <div class="card"><span class="k">Champ</span>
+<pre class="code">Champ {
+  polygone, superficie_ha
+  latitude, longitude
+  climat: {
+    pluie, temperature,
+    tendances }
+  sol: {
+    texture,
+    matiere_organique,
+    humidite }
+  eau: {
+    irrigation,
+    stress_hydrique }
+  historique_cultures
+}</pre></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B4 · Étapes 1 et 2</p>
+    <h2 class="h2">Conditions du champ, puis rotations valides</h2>
+    <div class="grid grid-wide">
+      <div class="card"><span class="k">Étape 1</span><p class="ct" style="margin-top: 12px">Analyser le champ</p>
+        <ul class="clean">
+          <li>Données NASA du polygone sur 10 à 20 ans</li>
+          <li>Moyennes de pluie et de température en saison</li>
+          <li>Tendances : réchauffement, assèchement</li>
+          <li>Années types : normale, la plus sèche, la plus chaude</li>
+          <li>Vigueur historique du champ (NDVI)</li>
+          <li>Classement des risques : sécheresse, chaleur, excès d'eau</li>
+        </ul></div>
+      <div class="card"><span class="k">Étape 2</span><p class="ct" style="margin-top: 12px">Générer et filtrer</p>
+        <p class="cb"><strong>MVP : tout énumérer.</strong> 6 cultures sur 3 ans = 6³ = 216 séquences, instantané. Les décalages d'une même rotation (A→B→C et B→C→A) comptent pour une seule. Plus tard, avec plus d'années ou plusieurs cultures par an : recherche heuristique (A*, faisceau).</p>
+        <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div class="rule"><span style="font-weight: 600">Calendrier : fin(A) ≤ semis(B)</span><span class="bad">✗ Blé d'hiver semé avant la récolte du maïs</span></div>
+          <div class="rule"><span style="font-weight: 600">Délai de retour de la même famille</span><span class="bad">✗ Soya → soya</span></div>
+          <div class="rule"><span style="font-weight: 600">Seulement les cultures choisies</span><span class="bad">✗ Culture non cochée</span></div>
+          <div class="rule"><span style="font-weight: 600">Adaptée au climat local</span><span class="bad">✗ Trop exigeante en chaleur</span></div>
+        </div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B5 · Étape 3</p>
+    <h2 class="h2">Les 5 scores</h2>
+    <p class="lead">Chaque score est normalisé de 0 à 100. Les formules sont des propositions de départ, à valider en équipe.</p>
+    <div class="grid grid-wide">
+      <div class="card"><span class="k">Score 1</span><p class="ct" style="margin-top: 12px">Rendement</p>
+<pre class="code">rendement(culture, année) =
+    rendement_base(culture, région)
+  × (1 + effet_précédent(préc, culture, météo))
+  × facteur_météo(scénario)</pre>
+        <ul class="clean sm" style="margin-top: 12px"><li>Effets par séquence : tableau B6.</li><li>Ajustés selon la pluie et la chaleur.</li></ul></div>
+      <div class="card"><span class="k">Score 2</span><p class="ct" style="margin-top: 12px">Résilience</p>
+<pre class="code">résilience = f(diversité,
+               tolérance des cultures,
+               perte en scénario sec/chaud)</pre>
+        <ul class="clean sm" style="margin-top: 12px"><li>Diversité = nombre de familles différentes.</li><li>Pertes en sécheresse réduites de 14 % à 90 % (Bowles 2020).</li><li>Rotation régulière : moins de variance (Lin 2026).</li></ul></div>
+      <div class="card"><span class="k">Score 3</span><p class="ct" style="margin-top: 12px">Santé du sol</p>
+<pre class="code">sol = Σ effet_sol(culture)
+    + bonus légumineuse
+    + bonus couverture
+    − pénalité monoculture
+    − pénalité sol nu</pre>
+        <ul class="clean sm" style="margin-top: 12px"><li>Compromis à afficher : la couverture protège le sol mais peut coûter un peu de rendement.</li></ul></div>
+      <div class="card"><span class="k">Score 4</span><p class="ct" style="margin-top: 12px">Eau</p>
+<pre class="code">déficit = besoin_eau(rotation)
+        − eau_disponible(pluie + sol)
+score_eau élevé si déficit ≈ 0</pre>
+        <ul class="clean sm" style="margin-top: 12px"><li>Besoin ajusté avec ECOSTRESS.</li><li>Disponibilité : IMERG/POWER + SMAP.</li><li>Incertitude ~10 à 20 % (Volk 2024).</li></ul></div>
+      <div class="card"><span class="k">Score 5</span><p class="ct" style="margin-top: 12px">Revenu</p>
+<pre class="code">revenu(année) =
+    rendement × prix × superficie
+  − coût × superficie
+revenu_rotation = moyenne / scénario</pre>
+        <ul class="clean sm" style="margin-top: 12px"><li>Toujours une fourchette, jamais un chiffre unique.</li><li>Prix et coûts : source régionale à trouver.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B6 · Les paramètres scientifiques</p>
+    <h2 class="h2">Effet de chaque enchaînement sur le rendement</h2>
+    <p class="lead">Comparé à la même culture répétée chaque année. Ce sont les valeurs que le prototype utilise déjà, dans <code>js/engine.js</code>.</p>
+    <div class="tbox">
+      <table class="t" style="min-width: 760px">
+        <thead><tr><th>Séquence</th><th>Effet</th><th>Contexte</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td>Maïs → soya</td><td class="pos" style="font-weight: 700">~ +8 %</td><td class="muted">É.-U., satellite</td><td>Kluger et al. 2025</td></tr>
+          <tr><td>Soya → blé de printemps</td><td class="pos" style="font-weight: 700">~ +8 %</td><td class="muted">Idem</td><td>Kluger et al. 2025</td></tr>
+          <tr><td>Soya → maïs</td><td class="pos" style="font-weight: 700">~ +2,5 %</td><td class="muted">Idem</td><td>Kluger et al. 2025</td></tr>
+          <tr><td>Blé d'hiver → maïs</td><td class="pos" style="font-weight: 700">~ +0,9 %</td><td class="muted">Idem</td><td>Kluger et al. 2025</td></tr>
+          <tr><td>Soya → blé d'hiver</td><td class="neg" style="font-weight: 700">~ −12 %</td><td class="muted">Probablement le semis tardif du blé</td><td>Kluger et al. 2025</td></tr>
+          <tr><td>Maïs → maïs</td><td class="neg" style="font-weight: 700">−4,3 %</td><td class="muted">Monoculture, Midwest, ~750 000 observations</td><td>Seifert et al. 2017</td></tr>
+          <tr><td>Plusieurs combinaisons</td><td style="font-weight: 700">+16 % à −16 %</td><td class="muted">Précédent cultural par NDVI, Finlande</td><td>Peltonen-Sainio et al. 2019</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid grid-wide" style="margin-top: 20px">
+      <div class="card"><p class="ct">Ajustement selon la météo</p>
+        <ul class="clean sm">
+          <li>La rotation aide davantage le maïs, le soya et le blé quand il pleut plus (Kluger et al. 2025).</li>
+          <li>Maïs : avantage d'environ 1,18 t/ha les années les plus fraîches contre 0,84 t/ha les plus chaudes. Soya : l'avantage augmente avec la chaleur (Kluger et al. 2022).</li>
+        </ul></div>
+      <div class="card"><p class="ct">Résilience, sol, eau</p>
+        <ul class="clean sm">
+          <li>Rotation diversifiée : pertes en sécheresse réduites de 14 % à 90 % (Bowles et al. 2020, 11 sites É.-U. et Canada).</li>
+          <li>Couvertures : léger gain (Seifert et al. 2018) jusqu'à environ −5 % pour le maïs selon une autre étude.</li>
+          <li>Évapotranspiration par satellite : erreur d'environ 10 à 20 % (Volk et al. 2024).</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B7 · Étapes 4, 5 et 6</p>
+    <h2 class="h2">Pondérer, tester, expliquer</h2>
+    <div class="grid grid-wide">
+      <div class="card"><span class="k">Étape 4</span><p class="ct" style="margin-top: 12px">Pondérer selon les priorités</p>
+<pre class="code">score_global =
+  w_eau    × eau
++ w_sol    × sol
++ w_risque × résilience
++ w_revenu × revenu
+
+w_i = curseur_i / Σ curseurs</pre>
+        <p class="cb" style="margin-top: 12px">On affiche le top 3, avec la rotation actuelle comme référence.</p></div>
+      <div class="card"><span class="k">Étape 5</span><p class="ct" style="margin-top: 12px">Scénarios et fourchettes</p>
+        <div class="rule" style="display: block"><b style="font-size: 14px">Normal</b><p class="cb">Moyenne des 10 à 20 dernières années</p></div>
+        <div class="rule" style="display: block; margin-top: 8px"><b style="font-size: 14px">Sec</b><p class="cb">L'année la plus sèche du champ</p></div>
+        <div class="rule" style="display: block; margin-top: 8px"><b style="font-size: 14px">Chaud</b><p class="cb">L'année la plus chaude</p></div>
+        <div class="rule" style="display: block; margin-top: 8px"><b style="font-size: 14px">Futur (option)</b><p class="cb">Projection climatique</p></div>
+        <p class="cb" style="margin-top: 12px">L'écart entre les scénarios donne la fourchette affichée.</p></div>
+      <div class="card"><span class="k">Étape 6</span><p class="ct" style="margin-top: 12px">Explications et confiance</p>
+        <p class="cb">Trois raisons principales, par exemple : « Le soya enrichit le sol en azote, ce qui augmente le rendement du maïs l'année suivante. »</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px">
+          <div style="display: flex; gap: 10px; align-items: baseline"><span class="pill" style="color: #FFFFFF; background: var(--accent)">Élevée</span><span class="cb">Plusieurs études, région proche.</span></div>
+          <div style="display: flex; gap: 10px; align-items: baseline"><span class="pill nasa">Moyenne</span><span class="cb">Une étude, ou région différente.</span></div>
+          <div style="display: flex; gap: 10px; align-items: baseline"><span class="pill" style="color: var(--warn-text); background: var(--warn-soft)">Faible</span><span class="cb">Estimation sans étude directe.</span></div>
+        </div>
+        <p class="cb" style="margin-top: 12px">IA générative en option : elle reformule uniquement à partir des chiffres calculés.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B8 · Pseudo-code</p>
+    <h2 class="h2">Tout l'algorithme en 15 lignes</h2>
+<pre class="code" style="font-size: 14px; padding: 24px">fonction suggerer(champ, cultures, priorites, horizon):
+    conditions = analyser_champ(champ)                     # Étape 1
+    candidates = generer_rotations(cultures, horizon)      # Étape 2
+    candidates = filtrer_valides(candidates, conditions)
+
+    pour chaque rotation dans candidates:
+        pour chaque scenario dans [normal, sec, chaud]:
+            scores[scenario] = calculer_scores(rotation, conditions, scenario)   # Étape 3
+        rotation.fourchettes = min/max(scores)             # Étape 5
+        rotation.score = ponderer(scores[normal], priorites)                     # Étape 4
+
+    top3 = trier(candidates, par score)[0:3]
+    pour chaque rotation dans top3:
+        rotation.explication = expliquer(rotation)         # Étape 6
+        rotation.confiance   = evaluer_confiance(rotation)
+    retourner top3</pre>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B9 · Architecture technique</p>
+    <h2 class="h2">Les couches de l'appli</h2>
+    <p class="lead">Ce dépôt (v1) contient le frontend et le moteur en JavaScript pur. Les couches suivantes arrivent pendant le hackathon.</p>
+    <div class="grid grid-wide" style="align-items: start">
+      <div class="pipe-col" style="gap: 0">
+        <div class="node dark"><b style="font-size: 15px">Frontend · appli web mobile</b><small>Carte et tracé du champ, écrans, curseurs, résultats. <strong style="color: var(--mint)">Fait dans la v1.</strong></small></div>
+        <div class="dn" aria-hidden="true">↕</div>
+        <div class="node"><b style="font-size: 15px">Backend · API JSON</b><small>/champ : conditions · /suggerer : top 3 · /simuler : rotation modifiée</small></div>
+        <div class="dn" aria-hidden="true">↕</div>
+        <div class="node"><b style="font-size: 15px">Pipeline de données</b><small>Récupération, nettoyage, mise en cache par région</small></div>
+        <div class="dn" aria-hidden="true">↕</div>
+        <div class="node soft"><b style="font-size: 15px">Base de connaissances</b><small style="color: var(--text)">Cultures, effets de rotation avec leur source, prix et coûts. <strong>Version simplifiée dans js/engine.js.</strong></small></div>
+        <div class="node dashed" style="margin-top: 10px"><b>APIs NASA + sol</b><small>Alimentent le pipeline de données</small></div>
+      </div>
+      <div class="tbox">
+        <table class="t" style="min-width: 0">
+          <thead><tr><th>Couche</th><th>Options possibles</th></tr></thead>
+          <tbody>
+            <tr><td>Frontend</td><td class="muted">HTML/CSS/JS (v1), puis React ou Svelte, Leaflet ou Mapbox (outil de dessin), Chart.js</td></tr>
+            <tr><td>Backend</td><td class="muted">Python (FastAPI), pour réutiliser les bibliothèques de données</td></tr>
+            <tr><td>Données</td><td class="muted">earthaccess, requests (POWER), xarray, rasterio, pandas</td></tr>
+            <tr><td>Stockage</td><td class="muted">JSON ou SQLite pour la base de connaissances</td></tr>
+            <tr><td>Hébergement</td><td class="muted">GitHub Pages pour la v1 ; Vercel + Render ensuite</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="eyebrow">B10 · Références</p>
+    <h2 class="h2">Les études et les données</h2>
+    <p class="lead">La liste complète, avec ce qu'on utilise de chaque source, est dans <a href="SOURCES.md">SOURCES.md</a>.</p>
+    <div class="grid grid-wide">
+      <div class="card"><p class="ct">Rotation et rendement</p>
+        <ul class="clean sm">
+          <li><a href="https://science.nasa.gov/earth/earth-observatory/how-to-rotate-crops-154601/" target="_blank" rel="noopener">Kluger, Di Tommaso, Lobell (2025)</a></li>
+          <li><a href="https://arxiv.org/abs/2112.13700v1" target="_blank" rel="noopener">Kluger, Owen, Lobell (2022)</a></li>
+          <li><a href="https://agris.fao.org/search/zh/records/65df2e2663b8185d9cab64c7" target="_blank" rel="noopener">Seifert, Roberts, Lobell (2017)</a></li>
+          <li><a href="https://agris.fao.org/search/ru/records/6748a03c8834da021e380628" target="_blank" rel="noopener">Peltonen-Sainio et al. (2019)</a></li>
+        </ul></div>
+      <div class="card"><p class="ct">Résilience</p>
+        <ul class="clean sm">
+          <li><a href="https://lter.kbs.msu.edu/citations/3830" target="_blank" rel="noopener">Bowles et al. (2020), One Earth</a></li>
+          <li><a href="https://ideas.repec.org/p/ags/aaea26/404696.html" target="_blank" rel="noopener">Lin, Won, Taylor (2026)</a></li>
+        </ul></div>
+      <div class="card"><p class="ct">Sol et couvertures</p>
+        <ul class="clean sm">
+          <li><a href="https://www.nasaharvest.org/news/new-stanford-research-on-satellite-detection-of-cover-crops-in-the-midwest" target="_blank" rel="noopener">Seifert, Azzari, Lobell (2018)</a></li>
+          <li><a href="https://ntrs.nasa.gov/api/citations/20250002857/downloads/2024Fall_MSFC_AlabamaAg_TechPaper_FD-final.pdf" target="_blank" rel="noopener">NASA DEVELOP, Alabama (2024)</a></li>
+        </ul></div>
+      <div class="card"><p class="ct">Eau et données</p>
+        <ul class="clean sm">
+          <li><a href="https://science.nasa.gov/?p=1058754" target="_blank" rel="noopener">Volk et al. (2024), Nature Water</a></li>
+          <li><a href="https://power.larc.nasa.gov/docs/services/api/" target="_blank" rel="noopener">NASA POWER API</a></li>
+          <li><a href="https://urs.earthdata.nasa.gov/users/new" target="_blank" rel="noopener">Créer un compte Earthdata</a></li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">Field Shift v1 · Équipe NASA-LARPERS · formules proposées, à valider en équipe.</div>
+</footer>
+<script>
+  // Lien « Lire le code » : pointe vers le dépôt GitHub quand le site est publié sur GitHub Pages
+  (function () {
+    var a = document.getElementById("codeLink"), h = location.hostname, m = h.match(/^([^.]+)\.github\.io$/);
+    var repo = location.pathname.split("/")[1];
+    if (m && repo) a.href = "https://github.com/" + m[1] + "/" + repo + "/blob/main/js/engine.js";
+    else a.href = "js/engine.js";
+  })();
+</script>
+</body>
+</html>
