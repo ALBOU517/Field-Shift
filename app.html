@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Field Shift · Prototype</title>
-<meta name="description" content="Prototype cliquable de Field Shift : délimitez votre champ et comparez des rotations de cultures à partir des données de la NASA.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Shift · Application</title>
+<meta name="description" content="Prototype de Field Shift : délimitez votre champ et comparez des rotations de cultures à partir des données de la NASA.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232E6B3B' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z'/%3E%3Cpath d='M2 21c0-3 1.9-5.4 5.1-6'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,51 +12,29 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="app-page">
-  <nav class="site-nav" aria-label="Navigation principale">
-    <div class="wrap">
-      <a class="brand" href="index.html">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6"/></svg>
-        Field Shift
-      </a>
-      <div class="nav-links">
-        <a href="index.html">Vue d'ensemble</a>
-        <a href="app.html" aria-current="page">Prototype</a>
-        <a href="algorithme.html">Algorithme</a>
-      </div>
+<nav class="site-nav" aria-label="Navigation principale">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6"/></svg>
+      Field Shift
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Vue d'ensemble</a>
+      <a href="app.html" aria-current="page">Application</a>
+      <a href="algorithme.html">Algorithme</a>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <div class="app-stage">
-    <aside class="app-aside">
-      <p class="eyebrow">Prototype v1</p>
-      <h1>Essayez Field Shift</h1>
-      <p>Délimitez un champ, choisissez vos cultures et vos priorités, puis comparez les rotations proposées.</p>
-      <p>Les suggestions sont calculées pour vrai à partir d'effets de rotation publiés. Les données du champ, les prix et les revenus sont <strong>fictifs</strong> : seule la logique compte dans cette version.</p>
-      <p><a href="algorithme.html">Comment l'algorithme fonctionne →</a></p>
-    </aside>
-
-    <div class="device">
-      <div class="app">
-        <header class="app-head">
-          <div class="row">
-            <button class="icon" id="backBtn" type="button" aria-label="Écran précédent" data-a="back">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-            <div class="titles">
-              <div class="small" id="stepTxt">Étape 1 sur 9</div>
-              <b id="titleTxt">Profil</b>
-            </div>
-            <div class="icon" aria-hidden="true" style="color: var(--accent); cursor: default">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6"/></svg>
-            </div>
-          </div>
-          <div class="bar progress"><div class="fill" id="progressFill" style="width: 11%"></div></div>
-        </header>
-        <main class="scr" id="scr" aria-live="polite"></main>
-        <footer class="app-foot" id="foot"></footer>
-      </div>
+<div class="shell">
+  <aside class="steps" id="steps" aria-label="Étapes"></aside>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="small" id="stepTxt">Étape 1 sur 9</div>
+      <div class="bar progress"><div class="fill" id="progressFill" style="width: 11%"></div></div>
     </div>
+    <main class="scr" id="scr" aria-live="polite"></main>
+    <div class="panel-foot" id="foot"></div>
   </div>
 </div>
 

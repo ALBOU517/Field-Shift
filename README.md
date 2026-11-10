@@ -4,7 +4,7 @@
 
 Projet de l'équipe **NASA-LARPERS** pour le [NASA Space Apps Challenge 2026](https://www.spaceappschallenge.org/2026/) (14 et 15 novembre), défi *Field Shift: Adapting Farms with NASA Data*.
 
-> **Version 1 : prototype.** L'interface et l'algorithme fonctionnent. Les données du champ, les prix et les revenus sont **fictifs** ; les effets de rotation viennent d'études publiées.
+> **Version 1.1 : prototype.** L'interface et l'algorithme fonctionnent. Les données du champ, les prix, les revenus et la tendance climatique sont **fictifs** ; les effets de rotation viennent d'études publiées.
 
 ---
 
@@ -14,23 +14,37 @@ Le fermier trace son champ sur une carte. L'appli récupère automatiquement les
 
 **Notre angle :** pas seulement « quoi planter l'an prochain », mais **quelle rotation résiste aux prochaines années sur ce champ précis**.
 
-## Ce que contient la v1
+## Décisions de l'équipe
+
+| Sujet | Choix |
+|---|---|
+| Plateforme | Application web (pas d'application mobile) |
+| Capteurs | Formule de base sans capteurs ; option avec capteurs pour les grandes fermes |
+| Horizon | 3, 4, 5, 10, 15 ou 30 ans |
+| Démo | Vidéo |
+| Communication | Yanis |
+| Suggestions | Aucun nom d'étude affiché ; les études sont dans « Détail et sources » et [`SOURCES.md`](SOURCES.md) |
+| Délimitation du terrain | À revoir |
+
+## Ce que contient la v1.1
 
 | Page | Contenu |
 |---|---|
-| [`index.html`](index.html) | Vue d'ensemble : défi, exigences, jugement, prix visés, niveaux, communication, risques |
-| [`app.html`](app.html) | **Prototype cliquable** en 9 écrans |
+| [`index.html`](index.html) | Vue d'ensemble : défi, exigences, jugement, prix visés, niveaux, communication, risques, décisions |
+| [`app.html`](app.html) | **Application web cliquable** en 9 étapes |
 | [`algorithme.html`](algorithme.html) | Le pipeline, les données, les 5 scores, les paramètres scientifiques |
 
-### Le prototype (9 écrans)
+### L'application (9 étapes)
 
-1. **Profil** · 2. **Localisation** · 3. **Délimiter le champ** · 4. **Mon champ** (pré-rempli par les satellites) · 5. **Cultures et priorités** · 6. **Résultats** · 7. **Explorer et modifier** · 8. **Stress test** · 9. **Détail et sources**
+1. **Profil** · 2. **Localisation** · 3. **Délimiter le champ** · 4. **Mon champ** (pré-rempli par les satellites, capteurs en option) · 5. **Cultures, horizon et priorités** · 6. **Résultats** · 7. **Explorer et modifier** · 8. **Stress test** · 9. **Détail et sources**
 
 Ce qui fonctionne vraiment :
-- **Carte :** on la glisse, on appuie sur « Délimiter », puis on place les coins du champ ; la superficie se calcule en direct.
-- **Suggestions :** toutes les rotations possibles sont énumérées, notées et classées selon les priorités du fermier.
-- **Études branchées dans le calcul :** effets de rotation de Kluger et al. (2025) et Seifert et al. (2017), effet de la chaleur de Kluger et al. (2022), effet de la diversité en sécheresse inspiré de Bowles et al. (2020).
-- **Modification en direct :** changer une culture ou une priorité recalcule les scores et affiche des avertissements sourcés.
+- **Carte :** on la glisse, on clique sur « Délimiter », puis on place les coins du champ ; la superficie se calcule en direct.
+- **Suggestions :** tous les cycles de 1 à 4 ans sont énumérés, répétés sur l'horizon, notés et classés selon les priorités du fermier.
+- **Horizons longs :** un graphique montre le revenu projeté de chaque rotation sur 3 à 30 ans, avec une tendance au réchauffement (illustrative pour l'instant).
+- **Études branchées dans le calcul** (sans que leur nom apparaisse dans les suggestions) : effets de rotation par séquence, pénalité de la monoculture, effet de la chaleur, effet de la diversité en sécheresse.
+- **Capteurs (grandes fermes) :** l'option remplace les estimations satellites d'humidité du sol par des mesures.
+- **Modification en direct :** changer une culture, ajouter ou retirer une année du cycle, ou bouger une priorité recalcule tout.
 - **Stress test :** compare les rotations en année normale, sèche et chaude.
 
 ## Lancer le projet
@@ -58,7 +72,7 @@ Ce lien public répond à l'exigence de soumission « lien vers le projet access
 ```
 field-shift/
 ├── index.html         Vue d'ensemble du projet
-├── app.html           Prototype cliquable
+├── app.html           Application web cliquable
 ├── algorithme.html    Explication de l'algorithme
 ├── css/
 │   └── style.css      Styles partagés
@@ -74,10 +88,10 @@ field-shift/
 ## L'algorithme en bref
 
 1. **Conditions du champ** à partir des données NASA (POWER, IMERG, SMAP, ECOSTRESS, HLS) et du sol.
-2. **Génération** de toutes les rotations possibles (les décalages d'une même rotation comptent pour une).
-3. **5 scores sur 100 :** rendement, résilience, sol, eau, revenu.
+2. **Génération** de tous les cycles de 1 à 4 ans (les décalages et répétitions d'un même cycle comptent pour un).
+3. **5 scores sur 100**, avec le cycle répété sur l'horizon : rendement, résilience, sol, eau, revenu.
 4. **Pondération** selon les priorités du fermier.
-5. **Scénarios** normal, sec et chaud, qui donnent des fourchettes.
+5. **Scénarios** normal, sec et chaud, plus une tendance au réchauffement sur l'horizon, qui donnent des fourchettes.
 6. **Explications** et niveau de confiance selon les études qui couvrent chaque enchaînement.
 
 Détails : [`algorithme.html`](algorithme.html).
@@ -85,7 +99,10 @@ Détails : [`algorithme.html`](algorithme.html).
 ## Feuille de route
 
 - [x] **v1** : prototype cliquable, moteur de suggestions, documentation
+- [x] **v1.1** : application web, horizons jusqu'à 30 ans, option capteurs, aucun nom d'étude dans les suggestions
+- [ ] Décider de la méthode de délimitation du terrain
 - [ ] Brancher NASA POWER (aucun compte nécessaire) pour la région de démo
+- [ ] Remplacer la tendance illustrative par les projections NEX-GDDP-CMIP6
 - [ ] Ajouter IMERG, SMAP, ECOSTRESS et HLS via `earthaccess`
 - [ ] Vraie carte satellite avec outil de dessin (Leaflet ou Mapbox)
 - [ ] Prix et coûts réels à partir de budgets de production régionaux

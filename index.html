@@ -20,7 +20,7 @@
     </a>
     <div class="nav-links">
       <a href="index.html" aria-current="page">Vue d'ensemble</a>
-      <a href="app.html">Prototype</a>
+      <a href="app.html">Application</a>
       <a href="algorithme.html">Algorithme</a>
     </div>
   </div>
@@ -33,12 +33,12 @@
     <p class="sub">Le fermier trace son champ sur une carte. L'appli récupère automatiquement les données NASA de ce champ et lui propose des rotations de cultures, avec leur effet sur l'eau, le sol, la résilience et le revenu.</p>
     <p class="angle">Notre angle : pas seulement « quoi planter l'an prochain », mais <strong>quelle rotation résiste aux prochaines années sur ce champ précis</strong>.</p>
     <div class="actions">
-      <a class="btn btn-mint" href="app.html">Essayer le prototype</a>
+      <a class="btn btn-mint" href="app.html">Essayer l'application</a>
       <a class="btn btn-outline" href="algorithme.html">Voir l'algorithme</a>
     </div>
     <div class="hero-meta">
       <div><strong>Field Shift: Adapting Farms with NASA Data</strong>Défi officiel · intermédiaire / avancé</div>
-      <div><strong>Appli web adaptée au mobile</strong>Un juge l'ouvre en un clic</div>
+      <div><strong>Application web</strong>Un juge l'ouvre en un clic, sans installation</div>
       <div><strong>5 sources NASA</strong>POWER, IMERG, SMAP, ECOSTRESS, HLS</div>
     </div>
   </div>
@@ -90,8 +90,8 @@
 <section class="sec">
   <div class="wrap">
     <p class="eyebrow">3 · L'interface</p>
-    <h2 class="h2">Le parcours en 9 écrans</h2>
-    <p class="lead">Chaque écran est cliquable dans le prototype. Le fermier ne remplit presque rien : les données NASA arrivent toutes seules à l'écran 4.</p>
+    <h2 class="h2">Le parcours en 9 étapes</h2>
+    <p class="lead">Une application web, pas une application mobile. Chaque étape est cliquable dans le prototype. Le fermier ne remplit presque rien : les données NASA arrivent toutes seules à l'étape 4.</p>
     <div class="flow">
       <div class="step"><span class="num">1</span>Profil</div><span class="arrow" aria-hidden="true">→</span>
       <div class="step"><span class="num">2</span>Localisation</div><span class="arrow" aria-hidden="true">→</span>
@@ -103,10 +103,15 @@
       <div class="step"><span class="num">8</span>Stress test</div><span class="arrow" aria-hidden="true">→</span>
       <div class="step"><span class="num">9</span>Détail et sources</div>
     </div>
-    <div class="actions" style="margin-top: 24px"><a class="btn btn-dark" href="app.html">Essayer le prototype</a></div>
+    <div class="actions" style="margin-top: 24px"><a class="btn btn-dark" href="app.html">Essayer l'application</a></div>
     <div class="grid" style="margin-top: 32px">
+      <div class="card"><p class="ct">Deux formules</p>
+        <p class="cb"><strong>Base :</strong> satellites seulement, aucun matériel à installer. C'est le cœur du projet.</p>
+        <p class="cb" style="margin-top: 10px"><strong>Grandes fermes :</strong> on ajoute des capteurs au champ (humidité du sol, station météo) qui remplacent les estimations satellites par des mesures en continu.</p></div>
+      <div class="card"><p class="ct">Horizons de 3 à 30 ans</p>
+        <p class="cb">Le fermier choisit 3, 4, 5, 10, 15 ou 30 ans. La rotation proposée est un cycle de 1 à 4 ans répété sur l'horizon ; plus il est long, plus la tendance au réchauffement pèse dans le calcul.</p></div>
       <div class="card"><p class="ct">Hors MVP : la vision du pitch</p>
-        <ul class="clean"><li>Capteurs au champ (humidité, nutriments)</li><li>Arrosage automatique</li><li>Suivi de l'eau et du sol en temps réel</li><li>Alertes en cours de saison</li><li>Plusieurs champs, toute la ferme</li></ul></div>
+        <ul class="clean"><li>Arrosage automatique</li><li>Suivi de l'eau et du sol en temps réel</li><li>Alertes en cours de saison</li><li>Plusieurs champs, toute la ferme</li></ul></div>
       <div class="card"><p class="ct">Principe clé</p>
         <p class="cb">Le fermier ne connaît pas toujours son niveau d'eau ou l'état de son sol. L'appli pré-remplit tout à partir du champ tracé, et il corrige seulement s'il sait mieux. C'est là que les données NASA deviennent indispensables, et pas décoratives.</p></div>
     </div>
@@ -198,7 +203,7 @@
       <table class="t">
         <thead><tr><th>Livrable</th><th>Format</th><th>Rôle</th></tr></thead>
         <tbody>
-          <tr><td>Démo</td><td>Vidéo de 30 s ou 7 diapositives</td><td class="muted">Premier contact avec les juges</td></tr>
+          <tr><td>Démo</td><td>Vidéo de 30 s (décidé)</td><td class="muted">Premier contact avec les juges · responsable : Yanis</td></tr>
           <tr><td>Appli en ligne</td><td>Lien public</td><td class="muted">Preuve que ça marche</td></tr>
           <tr><td>Page de projet</td><td>Texte en anglais sur Space Apps</td><td class="muted">Résumé, données NASA, références, déclaration IA</td></tr>
           <tr><td>Rapport méthodologique</td><td>PDF de 3 à 5 pages</td><td class="muted">Validité et Best Use of Science</td></tr>
@@ -207,7 +212,7 @@
       </table>
     </div>
 
-    <p class="ct" style="margin-top: 40px">Le pitch en 30 secondes</p>
+    <p class="ct" style="margin-top: 40px">La vidéo de 30 secondes</p>
     <div class="pitch">
       <div><div class="t">0–5 s</div><div class="w">Le problème</div><div class="d">Le climat change, le fermier ne sait plus quoi planter.</div></div>
       <div><div class="t">5–10 s</div><div class="w">La solution</div><div class="d">Field Shift en une phrase.</div></div>
@@ -250,18 +255,29 @@
   <div class="wrap">
     <p class="eyebrow">10 · Décisions</p>
     <h2 class="h2">À trancher en équipe</h2>
-    <p class="lead">Cochez au fur et à mesure pendant la réunion (les cases ne sont pas sauvegardées).</p>
+    <div class="tbox" style="margin-bottom: 28px">
+      <table class="t">
+        <thead><tr><th>Décidé le 8 novembre</th><th>Choix de l'équipe</th></tr></thead>
+        <tbody>
+          <tr><td>Plateforme</td><td class="muted">Application web, pas d'application mobile</td></tr>
+          <tr><td>Capteurs</td><td class="muted">Formule de base sans capteurs ; option avec capteurs pour les grandes fermes</td></tr>
+          <tr><td>Horizon</td><td class="muted">3, 4, 5, 10, 15 ou 30 ans</td></tr>
+          <tr><td>Démo</td><td class="muted">Vidéo</td></tr>
+          <tr><td>Communication</td><td class="muted">Yanis</td></tr>
+          <tr><td>Suggestions</td><td class="muted">Aucun nom d'étude affiché ; les études restent dans « Détail et sources » et SOURCES.md</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead">Encore ouvert. Cochez au fur et à mesure pendant la réunion (les cases ne sont pas sauvegardées).</p>
     <div class="card checks">
+      <label><input type="checkbox"><span>Délimitation du terrain : garder le tracé à la main, ou autre méthode (à voir)</span></label>
       <label><input type="checkbox"><span>Région cible pour la démo</span></label>
       <label><input type="checkbox"><span>Liste des 4 à 6 cultures</span></label>
-      <label><input type="checkbox"><span>Horizon : 3, 4 ou 5 ans</span></label>
       <label><input type="checkbox"><span>Stack technique</span></label>
-      <label><input type="checkbox"><span>Répartition des rôles (frontend, backend, données, algorithme, pitch, rapport)</span></label>
+      <label><input type="checkbox"><span>Répartition des rôles (frontend, backend, données, algorithme, rapport)</span></label>
       <label><input type="checkbox"><span>Source des prix et coûts</span></label>
       <label><input type="checkbox"><span>Source des données de sol</span></label>
       <label><input type="checkbox"><span>Ce qu'on prépare avant le 14 novembre, en restant dans les règles</span></label>
-      <label><input type="checkbox"><span>Vidéo ou diapositives pour la démo</span></label>
-      <label><input type="checkbox"><span>Responsable de la communication</span></label>
       <label><input type="checkbox"><span>Responsable du registre des sources et de la déclaration IA</span></label>
       <label><input type="checkbox"><span>Prix globaux visés en priorité (2 ou 3 maximum)</span></label>
       <label><input type="checkbox"><span>Contacter un agronome pour valider nos hypothèses</span></label>
@@ -269,14 +285,14 @@
     </div>
     <div class="actions" style="margin-top: 40px">
       <a class="btn btn-dark" href="algorithme.html">Passer à l'algorithme</a>
-      <a class="btn btn-light" href="app.html">Ouvrir le prototype</a>
+      <a class="btn btn-light" href="app.html">Ouvrir l'application</a>
     </div>
   </div>
 </section>
 </main>
 
 <footer class="site-foot">
-  <div class="wrap">Field Shift v1 · Équipe NASA-LARPERS · NASA Space Apps Challenge 2026. Prototype : données du champ, prix et revenus fictifs.</div>
+  <div class="wrap">Field Shift v1.1 · Équipe NASA-LARPERS · NASA Space Apps Challenge 2026. Prototype : données du champ, prix et revenus fictifs.</div>
 </footer>
 </body>
 </html>

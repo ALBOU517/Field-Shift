@@ -1,9 +1,12 @@
 /*
- * Field Shift : moteur de suggestions de rotations (v1, prototype)
+ * Field Shift : moteur de suggestions de rotations (v1.1, prototype)
  *
- * Ce fichier contient toute la logique de l'algorithme, séparée de l'interface.
+ * Toute la logique de l'algorithme, séparée de l'interface.
  * Les effets de rotation documentés viennent d'études publiées (voir SOURCES.md).
- * Les prix, coûts et paramètres de score sont FICTIFS : ils servent à démontrer la logique.
+ * Les prix, coûts, la tendance climatique et les paramètres de score sont FICTIFS :
+ * ils servent à démontrer la logique.
+ *
+ * Une rotation est un CYCLE de 1 à 4 ans, répété sur tout l'horizon choisi (3 à 30 ans).
  *
  * Chargé comme script classique (pas de module) pour fonctionner aussi en file://.
  */
@@ -21,7 +24,8 @@
   var IDS = ["mais", "soya", "bleP", "bleH", "orge"];
 
   // Effets documentés du précédent cultural sur le rendement
-  // (comparé à la même culture répétée chaque année)
+  // (comparé à la même culture répétée chaque année). La source n'est jamais
+  // affichée dans les suggestions : elle sert au registre des sources.
   var DOC = {
     "mais>soya": { v: 0.08, src: "Kluger et al. 2025 (Landsat)" },
     "soya>bleP": { v: 0.08, src: "Kluger et al. 2025 (Landsat)" },
@@ -49,8 +53,15 @@
     { name: "SMAP", what: "Humidité du sol" },
     { name: "ECOSTRESS", what: "Consommation d'eau des plantes" },
     { name: "HLS (Landsat + Sentinel-2)", what: "Vigueur de la végétation (NDVI)" },
+    { name: "NEX-GDDP-CMIP6", what: "Projections climatiques (horizons longs)" },
     { name: "SoilGrids", what: "Texture et matière organique du sol" }
   ];
+
+  var HORIZONS = [3, 4, 5, 10, 15, 30];
+  var MAX_CYCLE = 4;
+  // Tendance de réchauffement ILLUSTRATIVE : stress thermique supplémentaire par année.
+  // Dans la vraie appli, elle viendra des projections NEX-GDDP-CMIP6 pour le champ.
+  var TREND = 0.006;
 
   function clamp(v) { return Math.max(0, Math.min(100, Math.round(v))); }
 
@@ -62,14 +73,12 @@
     return { v: 0.03, src: "Estimation : rotation générique", doc: false };
   }
 
-  function cycle(seq, h) { var out = []; for (var i = 0; i < h; i++) out.push(seq[i % seq.length]); return out; }
-
   function nameOf(seq, cover) {
     var s = seq.map(function (id) { return CROPS[id].name; }).join(" → ");
     return cover ? s + " + trèfle" : s;
   }
 
-  // Forme canonique : une rotation et ses décalages (A→B→C, B→C→A...) sont la même rotation
+  // Forme canonique : A→B→C, B→C→A et C→A→B sont le même cycle
   function canon(seq) {
     var best = null;
     for (var i = 0; i < seq.length; i++) {
@@ -79,46 +88,75 @@
     return best;
   }
 
+  // Un cycle « maïs, soya, maïs, soya » est en fait le cycle de 2 ans « maïs, soya »
+  function isPrimitive(seq) {
+    var L = seq.length;
+    for (var p = 1; p < L; p++) {
+      if (L % p) continue;
+      var rep = true;
+      for (var i = p; i < L; i++) if (seq[i] !== seq[i - p]) { rep = false; break; }
+      if (rep) return false;
+    }
+    return true;
+  }
+
   /*
-   * Évalue une rotation (cyclique) pour un scénario : "normal", "sec" ou "chaud".
+   * Évalue un cycle répété sur H années, pour un scénario : "normal", "sec" ou "chaud".
    * ctx = { area (ha), cover, texture, irrig }
    */
-  function evaluate(seq, ctx, scen) {
-    var n = seq.length, fams = {}, nf = 0, repeats = 0, docN = 0, trans = [];
-    var multSum = 0, cash = 0, need = 0, tol = 0, soil = 0, leg = 0, i, c;
-    for (i = 0; i < n; i++) {
+  function evaluate(seq, ctx, scen, H) {
+    var L = seq.length;
+    H = H || L;
+    var fams = {}, nf = 0, repeats = 0, docN = 0, trans = [], effs = [];
+    var need = 0, tol = 0, soil = 0, leg = 0, i, c;
+    for (i = 0; i < L; i++) {
       c = CROPS[seq[i]];
       if (!fams[c.fam]) { fams[c.fam] = 1; nf++; }
       need += c.need; tol += c.tol; soil += c.soil; if (c.leg) leg++;
     }
-    need /= n; tol /= n; soil /= n; leg /= n;
+    need /= L; tol /= L; soil /= L; leg /= L;
 
-    for (i = 0; i < n; i++) {
-      var prev = seq[(i - 1 + n) % n], cur = seq[i], e = effect(prev, cur), ev = e.v;
-      // Chaleur : l'avantage de la rotation baisse pour le maïs, augmente pour le soya (Kluger et al. 2022)
-      if (scen === "chaud" && ev > 0) { if (cur === "mais") ev *= 0.71; if (cur === "soya") ev *= 1.25; }
+    // Enchaînements du cycle (régime permanent : la 1re culture suit la dernière)
+    for (i = 0; i < L; i++) {
+      var prev = seq[(i - 1 + L) % L], cur = seq[i], e = effect(prev, cur);
       if (prev === cur) repeats++;
       if (e.doc) docN++;
       trans.push({ prev: prev, cur: cur, v: e.v, src: e.src, doc: e.doc });
-      var m = 1 + ev;
-      // Sécheresse : perte réduite par la diversité (Bowles et al. 2020) et par l'irrigation
-      if (scen === "sec") m *= 1 - 0.3 * (CROPS[cur].need / 5) * (1 - Math.min(0.6, 0.2 * (nf - 1))) * (ctx.irrig ? 0.5 : 1);
-      if (scen === "chaud") m *= 1 - 0.15 * ((6 - CROPS[cur].tol) / 5);
-      if (ctx.cover) m *= 0.995; // couverture : léger coût de rendement possible
-      multSum += m;
-      cash += (CROPS[cur].gross * m - CROPS[cur].cost) * ctx.area;
+      effs.push(e.v);
     }
+
+    var div = Math.min(0.6, 0.2 * (nf - 1)); // effet protecteur de la diversité
+    var years = [], multSum = 0, cashSum = 0, driftSum = 0;
+    for (var y = 0; y < H; y++) {
+      var k = y % L, id = seq[k], C = CROPS[id], ev = effs[k];
+      // Chaleur : l'avantage de la rotation baisse pour le maïs, augmente pour le soya
+      if (scen === "chaud" && ev > 0) { if (id === "mais") ev *= 0.71; if (id === "soya") ev *= 1.25; }
+      var m = 1 + ev;
+      // Sécheresse : perte réduite par la diversité et par l'irrigation
+      if (scen === "sec") m *= 1 - 0.3 * (C.need / 5) * (1 - div) * (ctx.irrig ? 0.5 : 1);
+      if (scen === "chaud") m *= 1 - 0.15 * ((6 - C.tol) / 5);
+      // Tendance de réchauffement sur l'horizon (pèse surtout sur les cultures peu tolérantes)
+      var drift = TREND * (y + 1);
+      m *= 1 - drift * ((6 - C.tol) / 5) * (1 - div * 0.5);
+      if (ctx.cover) m *= 0.995; // couverture : léger coût de rendement possible
+      var cash = (C.gross * m - C.cost) * ctx.area;
+      years.push(cash);
+      multSum += m; cashSum += cash; driftSum += drift;
+    }
+    var avgDrift = driftSum / H;
 
     var tex = TEXTURES[ctx.texture];
     return {
-      eau: clamp(112 - need * 15 + tex.w + (ctx.irrig ? 8 : 0) - (scen === "sec" ? 14 : 0) - (scen === "chaud" ? 6 : 0)),
+      eau: clamp(112 - need * 15 + tex.w + (ctx.irrig ? 8 : 0) - (scen === "sec" ? 14 : 0) - (scen === "chaud" ? 6 : 0) - avgDrift * need * 12),
       sol: clamp(54 + soil * 16 + leg * 22 + (ctx.cover ? 14 : 0) - repeats * 12 + tex.s),
       res: clamp(26 + (nf - 1) * 22 + tol * 7 - repeats * 10),
-      rend: clamp((multSum / n) * 82),
-      rev: cash / n,
-      revHa: cash / n / ctx.area,
+      rend: clamp((multSum / H) * 82),
+      rev: cashSum / H,
+      revHa: cashSum / H / ctx.area,
+      total: cashSum,
+      years: years,
       trans: trans,
-      docShare: docN / n,
+      docShare: docN / L,
       nf: nf
     };
   }
@@ -131,37 +169,48 @@
     return Math.round((prio.eau * ev.eau + prio.sol * ev.sol + prio.risque * ev.res + prio.revenu * econ) / tot);
   }
 
-  function confOf(share) {
-    if (share >= 0.66) return { label: "Moyenne", why: "Chaque enchaînement est couvert par une étude, mais mesurée aux États-Unis : il faudra calibrer pour le Québec." };
-    if (share >= 0.33) return { label: "Moyenne-faible", why: "Une partie des enchaînements repose sur des études, le reste sur des estimations génériques." };
-    return { label: "Faible", why: "Aucune étude ne couvre directement ces enchaînements : valeurs estimées." };
+  // Niveau de confiance : part des enchaînements documentés, moins un niveau au-delà de 15 ans
+  function confOf(share, H) {
+    var lvl = share >= 0.66 ? 2 : share >= 0.33 ? 1 : 0;
+    var why = lvl === 2 ? "Chaque enchaînement est couvert par une étude publiée, mais mesurée aux États-Unis : il faudra calibrer pour le Québec."
+      : lvl === 1 ? "Une partie des enchaînements repose sur des études publiées, le reste sur des estimations."
+      : "Aucune étude ne couvre directement ces enchaînements : valeurs estimées.";
+    if (H >= 15) {
+      lvl = Math.max(0, lvl - 1);
+      why += " Sur " + H + " ans, les projections climatiques ajoutent de l'incertitude.";
+    }
+    return { label: ["Faible", "Moyenne-faible", "Moyenne"][lvl], why: why };
   }
 
   /*
-   * Étapes 2 à 5 : énumère toutes les rotations possibles, garde le top 3,
-   * ajoute la rotation actuelle et évalue chacune dans les 3 scénarios.
+   * Étapes 2 à 5 : énumère tous les cycles de 1 à 4 ans, retire les doublons,
+   * garde le top 3, ajoute la rotation actuelle et évalue chacun dans les 3 scénarios.
+   * Avec 5 cultures : 5 + 25 + 125 + 625 = 780 séquences testées, instantané.
    */
   function rank(opts) {
     var sel = IDS.filter(function (id) { return opts.crops[id]; });
-    var best = {}, h = opts.horizon, ctx = opts.ctx;
+    var best = {}, H = opts.horizon, ctx = opts.ctx, maxL = Math.min(MAX_CYCLE, H);
     if (sel.length >= 2) {
-      var total = Math.pow(sel.length, h);
-      for (var k = 0; k < total; k++) {
-        var seq = [], x = k;
-        for (var j = 0; j < h; j++) { seq.push(sel[x % sel.length]); x = Math.floor(x / sel.length); }
-        var cn = canon(seq);
-        if (best[cn]) continue;
-        best[cn] = { seq: cn.split(","), score: globalScore(evaluate(seq, ctx, "normal"), opts.prio) };
+      for (var L = 1; L <= maxL; L++) {
+        var total = Math.pow(sel.length, L);
+        for (var k = 0; k < total; k++) {
+          var seq = [], x = k;
+          for (var j = 0; j < L; j++) { seq.push(sel[x % sel.length]); x = Math.floor(x / sel.length); }
+          if (!isPrimitive(seq)) continue;
+          var cn = canon(seq);
+          if (best[cn]) continue;
+          best[cn] = { seq: cn.split(","), score: globalScore(evaluate(seq, ctx, "normal", H), opts.prio) };
+        }
       }
     }
     var ranked = Object.keys(best).map(function (k2) { return best[k2]; })
       .sort(function (a, b) { return b.score - a.score; }).slice(0, 3);
     var items = ranked.map(function (r, i) { return { seq: r.seq, kind: "rec", rank: i }; });
-    items.push({ seq: cycle(CURRENTS[opts.current].seq, h), kind: "cur", rank: 3 });
+    items.push({ seq: CURRENTS[opts.current].seq.slice(), kind: "cur", rank: 3 });
     items.forEach(function (it) {
-      it.normal = evaluate(it.seq, ctx, "normal");
-      it.sec = evaluate(it.seq, ctx, "sec");
-      it.chaud = evaluate(it.seq, ctx, "chaud");
+      it.normal = evaluate(it.seq, ctx, "normal", H);
+      it.sec = evaluate(it.seq, ctx, "sec", H);
+      it.chaud = evaluate(it.seq, ctx, "chaud", H);
       it.global = globalScore(it.normal, opts.prio);
       it.name = nameOf(it.seq, ctx.cover);
     });
@@ -170,7 +219,8 @@
 
   global.FieldShift = {
     CROPS: CROPS, IDS: IDS, DOC: DOC, TEXTURES: TEXTURES, CURRENTS: CURRENTS, SOURCES: SOURCES,
+    HORIZONS: HORIZONS, MAX_CYCLE: MAX_CYCLE, TREND: TREND,
     effect: effect, evaluate: evaluate, globalScore: globalScore, confOf: confOf,
-    rank: rank, canon: canon, nameOf: nameOf, cycle: cycle
+    rank: rank, canon: canon, nameOf: nameOf, isPrimitive: isPrimitive
   };
 })(window);

@@ -1,5 +1,7 @@
 # Registre des sources
 
+Règle d'équipe : les noms d'études n'apparaissent pas dans les suggestions de l'application. Ils sont regroupés ici et dans l'étape « Détail et sources ».
+
 Chaque source est notée **au moment où on l'utilise**. Types à inclure : études, jeux de données, bibliothèques de code, API, images, icônes, polices, musique de la vidéo, outils d'IA.
 
 ## Études scientifiques
@@ -30,6 +32,7 @@ Chaque source est notée **au moment où on l'utilise**. Types à inclure : étu
 | D4 | ECOSTRESS (`ECO_L3T_JET`) | Compte Earthdata | Évapotranspiration |
 | D5 | HLS (`HLSL30`, `HLSS30`) | Compte Earthdata | NDVI |
 | D6 | GRACE-FO Mascon | Compte Earthdata | Stockage d'eau (option) |
+| D6b | NEX-GDDP-CMIP6 (NASA Earth Exchange) | Ouvert | Projections climatiques pour les horizons de 10 à 30 ans |
 | D7 | SoilGrids | Ouvert | Texture et matière organique du sol |
 
 [Créer un compte Earthdata](https://urs.earthdata.nasa.gov/users/new) · [Space Data Atlas, page Field Shift](https://spacedata.swapniltamse.com/challenges/field-shift-adapting-farms/) (site non officiel, utilisé pour repérer les jeux de données)

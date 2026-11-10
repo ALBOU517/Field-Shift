@@ -20,7 +20,7 @@
     </a>
     <div class="nav-links">
       <a href="index.html">Vue d'ensemble</a>
-      <a href="app.html">Prototype</a>
+      <a href="app.html">Application</a>
       <a href="algorithme.html" aria-current="page">Algorithme</a>
     </div>
   </div>
@@ -96,7 +96,9 @@
           <tr><td>Humidité du sol</td><td><span class="pill nasa">SMAP</span></td><td>9 km, quotidien</td><td>Earthdata</td><td class="muted">Eau disponible, stress</td></tr>
           <tr><td>Consommation d'eau des plantes</td><td><span class="pill nasa">ECOSTRESS</span></td><td>~70 m</td><td>Earthdata</td><td class="muted">Besoin en eau, stress</td></tr>
           <tr><td>Vigueur de la végétation (NDVI)</td><td><span class="pill nasa">HLS</span></td><td>30 m</td><td>Earthdata</td><td class="muted">Historique du champ, précédent cultural</td></tr>
+          <tr><td>Projections climatiques</td><td><span class="pill nasa">NEX-GDDP-CMIP6</span></td><td>~25 km, quotidien jusqu'en 2100</td><td>Ouvert</td><td class="muted">Tendance au réchauffement pour les horizons de 10 à 30 ans</td></tr>
           <tr><td>Stockage d'eau à long terme</td><td><span class="pill nasa">GRACE-FO</span></td><td>Grossière, mensuelle</td><td>Earthdata</td><td class="muted">Tendance d'assèchement (option)</td></tr>
+          <tr><td>Humidité du sol et météo mesurées</td><td><span class="pill other">Capteurs au champ</span></td><td>Point, en continu</td><td>Matériel (grandes fermes)</td><td class="muted">Remplace SMAP et POWER par des mesures</td></tr>
           <tr><td>Texture et matière organique</td><td><span class="pill other">SoilGrids</span></td><td>250 m</td><td>Ouvert</td><td class="muted">Score sol, eau</td></tr>
           <tr><td>Cultures, priorités, historique</td><td><span class="pill other">Fermier</span></td><td>—</td><td>—</td><td class="muted">Contraintes et pondération</td></tr>
           <tr><td>Prix et coûts</td><td><span class="pill other">Budgets de production</span></td><td>Région</td><td>À trouver</td><td class="muted">Revenu</td></tr>
@@ -178,7 +180,7 @@
           <li>Classement des risques : sécheresse, chaleur, excès d'eau</li>
         </ul></div>
       <div class="card"><span class="k">Étape 2</span><p class="ct" style="margin-top: 12px">Générer et filtrer</p>
-        <p class="cb"><strong>MVP : tout énumérer.</strong> 6 cultures sur 3 ans = 6³ = 216 séquences, instantané. Les décalages d'une même rotation (A→B→C et B→C→A) comptent pour une seule. Plus tard, avec plus d'années ou plusieurs cultures par an : recherche heuristique (A*, faisceau).</p>
+        <p class="cb"><strong>Une rotation = un cycle de 1 à 4 ans, répété sur l'horizon choisi</strong> (3, 4, 5, 10, 15 ou 30 ans). On énumère tous les cycles : avec 5 cultures, 5 + 25 + 125 + 625 = 780 séquences, instantané. Les décalages (A→B→C et B→C→A) et les répétitions (A→B→A→B = A→B) comptent pour un seul cycle. Plus tard, avec plusieurs cultures par an : recherche heuristique (A*, faisceau).</p>
         <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px">
           <div class="rule"><span style="font-weight: 600">Calendrier : fin(A) ≤ semis(B)</span><span class="bad">✗ Blé d'hiver semé avant la récolte du maïs</span></div>
           <div class="rule"><span style="font-weight: 600">Délai de retour de la même famille</span><span class="bad">✗ Soya → soya</span></div>
@@ -281,7 +283,7 @@ w_i = curseur_i / Σ curseurs</pre>
         <div class="rule" style="display: block"><b style="font-size: 14px">Normal</b><p class="cb">Moyenne des 10 à 20 dernières années</p></div>
         <div class="rule" style="display: block; margin-top: 8px"><b style="font-size: 14px">Sec</b><p class="cb">L'année la plus sèche du champ</p></div>
         <div class="rule" style="display: block; margin-top: 8px"><b style="font-size: 14px">Chaud</b><p class="cb">L'année la plus chaude</p></div>
-        <div class="rule" style="display: block; margin-top: 8px"><b style="font-size: 14px">Futur (option)</b><p class="cb">Projection climatique</p></div>
+        <div class="rule" style="display: block; margin-top: 8px"><b style="font-size: 14px">Tendance sur l'horizon</b><p class="cb">Réchauffement progressif année après année, qui pèse surtout sur les cultures peu tolérantes à la chaleur. Illustratif dans la v1.1, à calibrer avec NEX-GDDP-CMIP6.</p></div>
         <p class="cb" style="margin-top: 12px">L'écart entre les scénarios donne la fourchette affichée.</p></div>
       <div class="card"><span class="k">Étape 6</span><p class="ct" style="margin-top: 12px">Explications et confiance</p>
         <p class="cb">Trois raisons principales, par exemple : « Le soya enrichit le sol en azote, ce qui augmente le rendement du maïs l'année suivante. »</p>
@@ -290,7 +292,8 @@ w_i = curseur_i / Σ curseurs</pre>
           <div style="display: flex; gap: 10px; align-items: baseline"><span class="pill nasa">Moyenne</span><span class="cb">Une étude, ou région différente.</span></div>
           <div style="display: flex; gap: 10px; align-items: baseline"><span class="pill" style="color: var(--warn-text); background: var(--warn-soft)">Faible</span><span class="cb">Estimation sans étude directe.</span></div>
         </div>
-        <p class="cb" style="margin-top: 12px">IA générative en option : elle reformule uniquement à partir des chiffres calculés.</p></div>
+        <p class="cb" style="margin-top: 12px">Au-delà de 15 ans, la confiance baisse d'un niveau. Les noms d'études n'apparaissent jamais dans les suggestions : ils sont regroupés dans « Détail et sources ».</p>
+        <p class="cb" style="margin-top: 8px">IA générative en option : elle reformule uniquement à partir des chiffres calculés.</p></div>
     </div>
   </div>
 </section>
@@ -301,12 +304,13 @@ w_i = curseur_i / Σ curseurs</pre>
     <h2 class="h2">Tout l'algorithme en 15 lignes</h2>
 <pre class="code" style="font-size: 14px; padding: 24px">fonction suggerer(champ, cultures, priorites, horizon):
     conditions = analyser_champ(champ)                     # Étape 1
-    candidates = generer_rotations(cultures, horizon)      # Étape 2
+    candidates = generer_cycles(cultures, longueur_max=4)  # Étape 2
     candidates = filtrer_valides(candidates, conditions)
 
     pour chaque rotation dans candidates:
         pour chaque scenario dans [normal, sec, chaud]:
-            scores[scenario] = calculer_scores(rotation, conditions, scenario)   # Étape 3
+            # le cycle est répété sur tout l'horizon, avec la tendance climatique
+            scores[scenario] = calculer_scores(rotation, conditions, scenario, horizon)   # Étape 3
         rotation.fourchettes = min/max(scores)             # Étape 5
         rotation.score = ponderer(scores[normal], priorites)                     # Étape 4
 
@@ -325,7 +329,7 @@ w_i = curseur_i / Σ curseurs</pre>
     <p class="lead">Ce dépôt (v1) contient le frontend et le moteur en JavaScript pur. Les couches suivantes arrivent pendant le hackathon.</p>
     <div class="grid grid-wide" style="align-items: start">
       <div class="pipe-col" style="gap: 0">
-        <div class="node dark"><b style="font-size: 15px">Frontend · appli web mobile</b><small>Carte et tracé du champ, écrans, curseurs, résultats. <strong style="color: var(--mint)">Fait dans la v1.</strong></small></div>
+        <div class="node dark"><b style="font-size: 15px">Frontend · application web</b><small>Carte et tracé du champ, étapes, curseurs, résultats, graphique sur l'horizon. <strong style="color: var(--mint)">Fait dans la v1.1.</strong></small></div>
         <div class="dn" aria-hidden="true">↕</div>
         <div class="node"><b style="font-size: 15px">Backend · API JSON</b><small>/champ : conditions · /suggerer : top 3 · /simuler : rotation modifiée</small></div>
         <div class="dn" aria-hidden="true">↕</div>
@@ -385,7 +389,7 @@ w_i = curseur_i / Σ curseurs</pre>
 </main>
 
 <footer class="site-foot">
-  <div class="wrap">Field Shift v1 · Équipe NASA-LARPERS · formules proposées, à valider en équipe.</div>
+  <div class="wrap">Field Shift v1.1 · Équipe NASA-LARPERS · formules proposées, à valider en équipe.</div>
 </footer>
 <script>
   // Lien « Lire le code » : pointe vers le dépôt GitHub quand le site est publié sur GitHub Pages
